@@ -1,0 +1,138 @@
+<html>
+<head>
+<title>Snow</title>
+<style>
+body {
+  display:inline-block;
+  background: #f5f5f5;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+#canvas {
+  z-index: 2;
+}
+</style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+<canvas id="text"></canvas>
+
+<script>
+// Adding rAF for smoother animation
+window.requestAnimFrame = (function(){
+  return  window.requestAnimationFrame       || 
+          window.webkitRequestAnimationFrame || 
+          window.mozRequestAnimationFrame    || 
+          window.oRequestAnimationFrame      || 
+          window.msRequestAnimationFrame     || 
+          function( callback ){
+            window.setTimeout(callback, 1000/30);
+          };
+})();
+
+// Basic canvas initialization
+var canvas      = document.getElementById("canvas"),
+    ctx         = canvas.getContext("2d"),
+    textCanvas  = document.getElementById("text"),
+    textCtx     = textCanvas.getContext("2d"),
+    W           = window.innerWidth,
+    H           = window.innerHeight,
+    snowballs   = [],
+    snowCount   = 100,
+    startOfBase = H/2,
+    gravity     = 0.3,
+    textData;
+
+canvas.width  = textCanvas.width  = W;
+canvas.height = textCanvas.height = H;
+
+(function drawText() {
+  textCtx.fillStyle = "#FFF";
+  textCtx.fillRect(0,0,W,H);
+  textCtx.fillStyle = "black";
+  textCtx.font = "bold 200px Arial, sans-serif";
+  textCtx.textAlign = "center";
+  textCtx.fillText("Booyah", W/2, H/2 + 50);
+  textData = textCtx.getImageData(0, 0, W, H).data;
+  console.log(textData);
+})();
+
+function startSnowing() {
+  clear();
+  for (var i = snowballs.length-1; i >= 0; i--) {
+
+    ctx.fillStyle = "rgba(200,200,255,"+snowballs[i].opacity+")";
+    textCtx.fillStyle = "rgba(200,200,255,"+snowballs[i].opacity+")";
+    if(!snowballs[i].stuck)
+      snowballs[i].y += snowballs[i].speed;
+    snowballs[i].y = Math.floor(snowballs[i].y);
+        
+    if (snowballs[i].y >= H || snowballs[i].y <= 0) {
+      reset(snowballs[i]);
+    }
+    else {
+      if ((textData[W*snowballs[i].y*4 + snowballs[i].x*4]) == 255) {
+        // Falling Snowballs
+        ctx.beginPath();
+        ctx.arc(snowballs[i].x, snowballs[i].y, snowballs[i].radius, 0, Math.PI * 2);
+        ctx.fill();
+        snowballs[i].speed += gravity;
+      } else {
+        // Snow's now stuck. Put it on text layer, and reset it.
+        textCtx.beginPath();
+        textCtx.arc(snowballs[i].x, snowballs[i].y, snowballs[i].radius, 0, Math.PI * 2);
+        textCtx.fill();
+        reset(snowballs[i]);
+        // snowballs.splice(i, 1);
+      }
+    }
+  }
+  requestAnimationFrame(startSnowing);
+};
+
+function reset(snow) {
+  snow.x = Math.floor(Math.random() * W);
+  snow.y = Math.floor(Math.random() * H/2) - H/2;
+  snow.radius = (Math.random() * 5) + 15;
+  snow.speed = (Math.random() * 2) + 1;
+  snow.opacity = ((Math.random() * 0.5) + 0.4);
+  snow.stuck = false;
+  snow.friction = (Math.random()*2);
+}
+function init() {
+  for (var i = 0; i < snowCount; i++) {
+    var x = Math.floor(Math.random() * W),
+        y = Math.floor(Math.random() * H/2) - H/2,
+        radius = (Math.random() * 5) + 15,
+        speed = (Math.random() * 2) + 1,
+        opacity = ((Math.random() * 0.5) + 0.4);
+    snowballs.push({
+      speed: speed,
+      x: x,
+      y: y,
+      radius: radius,
+      opacity: opacity,
+      friction: (Math.random()*2),
+      stuck: false
+    });
+  }
+  startSnowing();
+};
+
+function clear() {
+  ctx.clearRect(0, 0, W, H);
+}
+
+init();
+
+</script>
+
+</body>
+</html>
