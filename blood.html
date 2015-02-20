@@ -1,0 +1,148 @@
+<html>
+<head>
+<title>Blood</title>
+<style>
+body {
+  display:inline-block;
+  background: #f5f5f5;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+#canvas {
+  z-index: 2;
+}
+</style>
+</head>
+<body>
+
+<video id="video" autoplay></video>
+<canvas id="canvas"></canvas>
+
+<script>
+// Adding rAF for smoother animation
+window.requestAnimFrame = (function(){
+  return  window.requestAnimationFrame       || 
+          window.webkitRequestAnimationFrame || 
+          window.mozRequestAnimationFrame    || 
+          window.oRequestAnimationFrame      || 
+          window.msRequestAnimationFrame     || 
+          function( callback ){
+            window.setTimeout(callback, 1000/30);
+          };
+})();
+
+// Basic canvas initialization
+var canvas      = document.getElementById("canvas"),
+    ctx         = canvas.getContext("2d"),
+    W           = window.innerWidth,
+    H           = window.innerHeight,
+    drops       = [];
+    dropCount   = 100,
+    startOfBase = H/2;
+    gravity     = 0.3;;
+
+canvas.width  = W;
+canvas.height = H;
+
+(function drawText() {
+  ctx.fillStyle = "#FFF";
+  ctx.fillRect(0,0,W,H);
+  ctx.fillStyle = "black";
+  ctx.font = "100px Arial, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("Booyah", W/2, 3*H/4);
+})();
+
+function dropBlood() {
+  clear();
+  for (var i = 0; i < dropCount; i++) {
+
+    ctx.fillStyle = "rgb("+drops[i].red+",0,0)";
+    ctx.strokeStyle = "rgb("+drops[i].red+",0,0)";
+    drops[i].y += drops[i].speed;
+        
+    if (drops[i].y >= canvas.height || drops[i].y <= 0) {
+      reset(drops[i]);
+    }
+
+    if (drops[i].y < startOfBase) {
+      // Droplets fall
+      ctx.beginPath();
+      ctx.arc(drops[i].x, drops[i].y, drops[i].radius, 0, Math.PI * 2);
+      ctx.fill();
+      drops[i].speed += gravity;
+    }
+    if (drops[i].y > startOfBase) {
+      // Droplets leave a trail
+      // Stroke and Arc both because the round linecap is needed on one end.
+      ctx.beginPath();
+      ctx.moveTo(drops[i].x,startOfBase);
+      ctx.lineTo(drops[i].x,drops[i].y);
+      ctx.lineWidth = drops[i].radius*2;
+      ctx.stroke();
+      ctx.arc(drops[i].x, drops[i].y, drops[i].radius, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Decrease speed by 1 on entering. Friction will follow.
+      if (!drops[i].entered) {
+        drops[i].speed - 1;
+        entered = true;
+      }
+      if (drops[i].speed -drops[i].friction > 0)
+        drops[i].speed -= drops[i].friction;
+      else {
+        drops[i].speed = 0;
+        ctx.beginPath();
+        ctx.arc(drops[i].x, drops[i].y, drops[i].radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+  requestAnimationFrame(dropBlood);
+};
+
+function reset(drop) {
+  drop.x = Math.floor(Math.random() * canvas.width);
+  drop.y = Math.floor(Math.random() * 500)-500;
+  drop.radius = (Math.random() * 5) + 5;
+  drop.speed = (Math.random() * 2) + 1;
+  drop.red = Math.floor(((Math.random() * 0.5) + 0.4)*255);
+  drop.entered = false;
+  drop.friction = (Math.random()*2);
+}
+function init() {
+  for (var i = 0; i < dropCount; i++) {
+    var x = Math.floor(Math.random() * canvas.width),
+        y = Math.floor(Math.random() * 500)-500,
+        radius = (Math.random() * 5) + 5,
+        speed = (Math.random() * 2) + 1,
+        red = Math.floor(((Math.random() * 0.5) + 0.4)*255);
+    drops.push({
+      speed: speed,
+      x: x,
+      y: y,
+      radius: radius,
+      red: red,
+      friction: (Math.random()*2),
+      entered: false
+    });
+  }
+  dropBlood();
+};
+
+function clear() {
+  ctx.clearRect(0, 0, canvas.width, startOfBase);
+}
+
+init();
+
+</script>
+
+</body>
+</html>
