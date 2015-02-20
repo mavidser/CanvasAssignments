@@ -1,0 +1,114 @@
+<html>
+<head>
+<title>Bouncy</title>
+<style>
+body {
+  display:inline-block;
+  background: #f5f5f5;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+#canvas {
+  z-index: 2;
+}
+</style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<script>
+// Adding rAF for smoother animation
+window.requestAnimFrame = (function(){
+  return  window.requestAnimationFrame       || 
+          window.webkitRequestAnimationFrame || 
+          window.mozRequestAnimationFrame    || 
+          window.oRequestAnimationFrame      || 
+          window.msRequestAnimationFrame     || 
+          function( callback ){
+            window.setTimeout(callback, 1000/30);
+          };
+})();
+
+// Basic canvas initialization
+var canvas        = document.getElementById("canvas"),
+    ctx           = canvas.getContext("2d"),
+    W             = window.innerWidth,
+    H             = window.innerHeight,
+    balls     = [],
+    ballCount     = 100,
+    gravity       = 0.3,
+    bounceFactorY = 0.9,
+    bounceFactorX = 0.95;
+
+canvas.width  = W;
+canvas.height = H;
+
+function startFalling() {
+  clear();
+  for (var i = balls.length-1; i >= 0; i--) {
+
+    ctx.fillStyle = "rgba(145,200,076,"+balls[i].opacity+")";
+    balls[i].y += balls[i].velY;
+    balls[i].x += balls[i].velX;
+    balls[i].y = Math.floor(balls[i].y);
+        
+    if (balls[i].y >= (H-balls[i].radius))
+      bounceY(balls[i]);
+
+    if (balls[i].x >= (W-balls[i].radius) ||
+        balls[i].x <= (balls[i].radius)) {
+      bounceX(balls[i]);
+    }
+    else {
+      ctx.beginPath();
+      ctx.arc(balls[i].x, balls[i].y, balls[i].radius, 0, Math.PI * 2);
+      ctx.fill();
+      balls[i].velY += gravity;
+    }
+  }
+  requestAnimationFrame(startFalling);
+};
+
+function bounceY(ball) {
+  ball.velY = -ball.velY*bounceFactorY;
+}
+function bounceX(ball) {
+  ball.velX = -ball.velX*bounceFactorX;
+}
+function init() {
+  for (var i = 0; i < ballCount; i++) {
+    var x = Math.floor(Math.random() * W),
+        y = Math.floor(Math.random() * H),
+        radius = (Math.random() * 5) + 15,
+        velX = ((Math.random() * 6) - 3),
+        velY = ((Math.random() * 5) + 10),
+        opacity = ((Math.random() * 0.5) + 0.4);
+    balls.push({
+      velY: velY,
+      velX: velX,
+      x: x,
+      y: y,
+      radius: radius,
+      opacity: opacity
+    });
+  }
+  startFalling();
+};
+
+function clear() {
+  ctx.clearRect(0, 0, W, H);
+}
+
+init();
+
+</script>
+
+</body>
+</html>
