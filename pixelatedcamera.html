@@ -1,0 +1,106 @@
+<html>
+<head>
+<title>Pixelated Camera</title>
+<style>
+body {
+  display:inline-block;
+  /*background: #000;*/
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+#canvas {
+  z-index: 2;
+}
+video {
+  text-align: center;
+  margin: 0 auto;
+  position: fixed;
+  top: 0;
+  left: 0;
+  /*height: 100%;*/
+  min-width: 100%; min-height: 100%;
+  width: auto; height: auto; z-index: -100;
+  /*background-size: cover;*/
+}
+</style>
+</head>
+<body>
+
+<video id="video" autoplay></video>
+<canvas id="canvas"></canvas>
+
+<script>
+var canvas      = document.querySelector("#canvas"),
+    context     = canvas.getContext("2d"),
+    tempCanvas  = document.createElement("canvas"),
+    tempContext = tempCanvas.getContext("2d"),
+    SQUARE      = "■",
+    FONT_SIZE   = 40,
+    BRIGHTNESS  = 1.5,
+    width, height, video;
+
+navigator.getUserMedia = ( navigator.getUserMedia ||
+                           navigator.webkitGetUserMedia ||
+                           navigator.mozGetUserMedia ||
+                           navigator.msGetUserMedia);
+
+navigator.getUserMedia(
+  {video:true},
+  function (localMediaStream) {
+    video = document.querySelector("#video");
+    video.src = window.URL.createObjectURL(localMediaStream);
+    setTimeout(init, 2000);
+  },
+  function (e) {
+    alert("Please Allow Webcam access");
+});
+
+
+function init() {  
+  width = tempCanvas.width = canvas.width = video.clientWidth;
+  height = tempCanvas.height = canvas.height = video.clientHeight;
+
+  document.querySelector("video").style.display="none";
+  context.font = FONT_SIZE+"px consolas, courier";
+  setTimeout(draw, 20);
+}
+
+function drawPixelated(data) {
+  var sourcePixels = data.data;
+  var numCols = data.width;
+  var numRows = data.height;
+
+  for (var row = 0; row < numRows; row += FONT_SIZE/2) {
+    var rowOffset = row * numCols * 4;
+
+    for (var col = 0; col < numCols; col += FONT_SIZE/2) {
+      var offset = rowOffset + 4 * col;
+
+      var r = Math.min(255,sourcePixels[offset]*BRIGHTNESS);
+      var g = Math.min(255,sourcePixels[offset + 1]*BRIGHTNESS);
+      var b = Math.min(255,sourcePixels[offset + 2]*BRIGHTNESS);
+      var brightness = (0.299 * r + 0.587 * g + 0.114 * b)/255;
+      
+      context.fillStyle = "rgba(0,0,0," + (1-brightness)+")";
+      context.fillText(SQUARE, col, row);
+    }
+  }
+}
+
+function draw() {
+  context.clearRect(0, 0, width, height);
+  tempContext.drawImage(video, 0, 0, width, height);
+  drawPixelated(tempContext.getImageData(0, 0, width, height));
+  setTimeout(draw, 1000/24);
+}
+
+</script>
+
+</body>
+</html>
